@@ -9,7 +9,7 @@ app = Flask(__name__)
 modelo = joblib.load('modelo_xgb_cafe.pkl')
 scaler = joblib.load('escalador_cafe.pkl')
 
-# Código HTML incrustado para mantenerlo todo en un solo script fácil de correr
+# Código HTML incrustado con diseño mejorado, colores café y soporte de imágenes dinámicas
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="es">
@@ -20,95 +20,149 @@ HTML_TEMPLATE = """
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f4f7f6;
+            background: linear-gradient(135deg, #e6d5c3 0%, #c3a68f 100%);
+            background-attachment: fixed;
             margin: 0;
-            padding: 20px;
+            padding: 40px 20px;
             display: flex;
             justify-content: center;
         }
         .container {
-            background-color: white;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            max-width: 600px;
+            background-color: rgba(255, 255, 255, 0.95);
+            border-radius: 16px;
+            box-shadow: 0 8px 30px rgba(74, 59, 50, 0.2);
+            max-width: 650px;
             width: 100%;
+            overflow: hidden;
         }
-        h1 { color: #4a3b32; text-align: center; margin-bottom: 20px; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .banner-header {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            display: block;
+        }
+        .content {
+            padding: 30px;
+        }
+        h1 { 
+            color: #4a3b32; 
+            text-align: center; 
+            margin-top: 10px;
+            margin-bottom: 25px;
+            font-size: 28px;
+            font-weight: 700;
+        }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
         .form-group { display: flex; flex-direction: column; }
-        label { margin-bottom: 5px; font-weight: bold; color: #555; }
+        label { margin-bottom: 6px; font-weight: 600; color: #5a4a42; font-size: 14px; }
         input {
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
+            padding: 11px;
+            border: 2px solid #dcd1c4;
+            border-radius: 8px;
             font-size: 14px;
+            transition: border-color 0.3s;
+            background-color: #fdfbf7;
+        }
+        input:focus {
+            outline: none;
+            border-color: #8c6239;
         }
         button {
             grid-column: span 2;
-            background-color: #6f4e37;
+            background-color: #5c3a21;
             color: white;
-            padding: 12px;
+            padding: 14px;
             border: none;
-            border-radius: 6px;
+            border-radius: 8px;
             font-size: 16px;
+            font-weight: bold;
             cursor: pointer;
             margin-top: 15px;
-            transition: background 0.3s;
+            transition: background 0.3s, transform 0.1s;
+            box-shadow: 0 4px 10px rgba(92, 58, 33, 0.3);
         }
-        button:hover { background-color: #553c2a; }
+        button:hover { background-color: #442a17; }
+        button:active { transform: scale(0.99); }
+        
         .result {
-            margin-top: 25px;
-            padding: 15px;
-            border-radius: 6px;
+            margin-top: 30px;
+            border-radius: 12px;
+            overflow: hidden;
             display: none;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            background-color: white;
+            border: 1px solid #e0e0e0;
         }
-        .apto { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
-        .no-apto { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
-        ul { padding-left: 20px; }
+        .result-img {
+            width: 100%;
+            height: 140px;
+            object-fit: cover;
+        }
+        .result-body {
+            padding: 20px;
+        }
+        .apto { border-left: 6px solid #28a745; }
+        .apto h3 { color: #1e7e34; margin-top: 0; }
+        .no-apto { border-left: 6px solid #dc3545; }
+        .no-apto h3 { color: #bd2130; margin-top: 0; }
+        
+        .certeza-text {
+            font-weight: 600;
+            color: #666;
+            margin-bottom: 15px;
+        }
+        ul { padding-left: 20px; color: #444; }
+        li { margin-bottom: 8px; line-height: 1.4; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>☕ Evaluador de Suelos para Café</h1>
-    <form id="sueloForm" class="grid">
-        <div class="form-group">
-            <label>Nitrógeno (N):</label>
-            <input type="number" id="N" value="107" required step="any">
-        </div>
-        <div class="form-group">
-            <label>Fósforo (P):</label>
-            <input type="number" id="P" value="34" required step="any">
-        </div>
-        <div class="form-group">
-            <label>Potasio (K):</label>
-            <input type="number" id="K" value="32" required step="any">
-        </div>
-        <div class="form-group">
-            <label>pH del Suelo:</label>
-            <input type="number" id="ph" value="6.78" required step="any">
-        </div>
-        <div class="form-group">
-            <label>Temperatura (°C):</label>
-            <input type="number" id="temperature" value="26.77" required step="any">
-        </div>
-        <div class="form-group">
-            <label>Humedad (%):</label>
-            <input type="number" id="humidity" value="66.41" required step="any">
-        </div>
-        <div class="form-group" style="grid-column: span 2;">
-            <label>Precipitación / Lluvia (mm):</label>
-            <input type="number" id="rainfall" value="177.77" required step="any">
-        </div>
-        <button type="submit">📋 Evaluar Terreno</button>
-    </form>
+    <img src="https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?q=80&w=800&auto=format&fit=crop" class="banner-header" alt="Cafetal">
+    
+    <div class="content">
+        <h1>☕ Evaluador Inteligente de Suelos</h1>
+        <form id="sueloForm" class="grid">
+            <div class="form-group">
+                <label>Nitrógeno (N):</label>
+                <input type="number" id="N" value="107" required step="any">
+            </div>
+            <div class="form-group">
+                <label>Fósforo (P):</label>
+                <input type="number" id="P" value="34" required step="any">
+            </div>
+            <div class="form-group">
+                <label>Potasio (K):</label>
+                <input type="number" id="K" value="32" required step="any">
+            </div>
+            <div class="form-group">
+                <label>pH del Suelo:</label>
+                <input type="number" id="ph" value="6.78" required step="any">
+            </div>
+            <div class="form-group">
+                <label>Temperatura (°C):</label>
+                <input type="number" id="temperature" value="26.77" required step="any">
+            </div>
+            <div class="form-group">
+                <label>Humedad (%):</label>
+                <input type="number" id="humidity" value="66.41" required step="any">
+            </div>
+            <div class="form-group" style="grid-column: span 2;">
+                <label>Precipitación / Lluvia (mm):</label>
+                <input type="number" id="rainfall" value="177.77" required step="any">
+            </div>
+            <button type="submit">📋 Analizar Muestra de Tierra</button>
+        </form>
 
-    <div id="resultadoBox" class="result">
-        <h3 id="resultadoTitulo"></h3>
-        <p id="resultadoCerteza"></p>
-        <h4>💡 Recomendaciones:</h4>
-        <div id="recomendacionesTexto"></div>
+        <div id="resultadoBox" class="result">
+            <img id="resultadoImg" src="" class="result-img" alt="Estado del terreno">
+            <div class="result-body">
+                <h3 id="resultadoTitulo"></h3>
+                <p id="resultadoCerteza" class="certeza-text"></p>
+                <h4>💡 Recomendaciones Técnicas:</h4>
+                <div id="recomendacionesTexto"></div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -135,16 +189,31 @@ document.getElementById('sueloForm').addEventListener('submit', async (e) => {
     const res = await response.json();
     
     const resBox = document.getElementById('resultadoBox');
+    const resImg = document.getElementById('resultadoImg');
+    
     resBox.style.display = 'block';
-    resBox.className = 'result ' + (res.clase === 1 ? 'apto' : 'no-apto');
+    
+    // Configuración visual dinámica según la predicción del modelo
+    if (res.clase === 1) {
+        resBox.className = 'result apto';
+        // Imagen de planta de café saludable creciendo
+        resImg.src = "https://images.unsplash.com/photo-1509042239860-f550ce710b93?q=80&w=600&auto=format&fit=crop";
+    } else {
+        resBox.className = 'result no-apto';
+        // Imagen de tierra seca/inadecuada
+        resImg.src = "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?q=80&w=600&auto=format&fit=crop";
+    }
     
     document.getElementById('resultadoTitulo').innerText = res.diagnostico;
-    document.getElementById('resultadoCerteza').innerText = `Certeza del modelo: ${res.certeza}%`;
+    document.getElementById('resultadoCerteza').innerText = `Fiabilidad del diagnóstico: ${res.certeza}%`;
     
     let recsHtml = '<ul>';
     res.recomendaciones.forEach(r => recsHtml += `<li>${r}</li>`);
     recsHtml += '</ul>';
     document.getElementById('recomendacionesTexto').innerHTML = recsHtml;
+    
+    // Desplazar la pantalla suavemente hacia el resultado
+    resBox.scrollIntoView({ behavior: 'smooth' });
 });
 </script>
 
@@ -172,18 +241,18 @@ def predict():
     certeza = float(probabilidades[prediccion] * 100)
     
     if prediccion == 1:
-        diagnostico = "🎉 ¡SUELO APTO PARA CAFÉ!"
+        diagnostico = "🎉 ¡SUELO OPTIMIZADO Y APTO PARA CAFÉ!"
         recs = [
-            "Mantener el equilibrio: Las condiciones actuales son excelentes. Evita la sobrefertilización.",
-            "Monitoreo hídrico: Conserva la humedad del suelo usando coberturas vegetales orgánicas.",
-            "Control de acidez: Tu pH es óptimo, haz análisis preventivos cada ciclo."
+            "**Preservar el balance:** Las condiciones actuales son excelentes. Evita añadir fertilizantes nitrogenados innecesarios para no quemar la raíz.",
+            "**Conservación de humedad:** El nivel hídrico reportado es ideal. Se aconseja implementar coberturas orgánicas (acolchado) para protegerlo de la evaporación solar directa.",
+            "**Control preventivo:** El pH se ubica en el punto dulce para la absorción de nutrientes del café. Realiza calicatas de control cada ciclo productivo."
         ]
     else:
-        diagnostico = "❌ SUELO NO APTO PARA CAFÉ"
+        diagnostico = "❌ CONDICIONES NO APTAS PARA EL CULTIVO"
         recs = [
-            "Revisión de Nutrientes: Compara tus niveles de N-P-K con las necesidades del café.",
-            "Factor Climático: Si la temperatura o lluvia están fuera de rango, evalúa invernaderos o riego artificial.",
-            "Alternativa: El ecosistema actual podría ser ideal para otro tipo de cultivo (rotación)."
+            "**Plan de Enmiendas Químicas:** Tus macronutrientes esenciales (N-P-K) no se alinean con las demandas del cultivo de café. Diseña un plan de fertilización correctiva basada en estos desbalances.",
+            "**Monitoreo del Microclima:** Los factores de temperatura o lluvia están limitando el éxito del cultivo. Considera la implementación de sistemas de riego controlado o el uso de árboles de sombra (como el género Inga) para regular la temperatura.",
+            "**Alternativa Agronómica:** Las características de este suelo sugieren una afinidad natural hacia otro tipo de bioma. Si las correcciones son muy costosas, evalúa la rotación de cultivos compatibles."
         ]
         
     return jsonify({
@@ -194,6 +263,3 @@ def predict():
     })
 
 if __name__ == '__main__':
-    import os
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port)
