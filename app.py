@@ -5,11 +5,9 @@ import joblib
 
 app = Flask(__name__)
 
-# Cargar el modelo y el escalador con sus nombres correctos
 modelo = joblib.load('modelo_xgb_cafe.pkl')
 scaler = joblib.load('escalador_cafe.pkl')
 
-# Código HTML incrustado con diseño mejorado, colores café y soporte de imágenes dinámicas
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="es">
@@ -20,149 +18,191 @@ HTML_TEMPLATE = """
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #e6d5c3 0%, #c3a68f 100%);
-            background-attachment: fixed;
+            background-color: #4a3b32;
             margin: 0;
-            padding: 40px 20px;
+            padding: 50px 20px;
             display: flex;
-            justify-content: center;
+            flex-direction: column;
+            align-items: center;
         }
+        .titulo-superior {
+            color: #ffffff;
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 30px;
+            text-align: center;
+            text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5);
+            letter-spacing: 0.5px;
+        }
+        
         .container {
-            background-color: rgba(255, 255, 255, 0.95);
-            border-radius: 16px;
-            box-shadow: 0 8px 30px rgba(74, 59, 50, 0.2);
-            max-width: 650px;
+            background-color: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            max-width: 750px;
             width: 100%;
-            overflow: hidden;
-        }
-        .banner-header {
-            width: 100%;
-            height: 180px;
-            object-fit: cover;
-            display: block;
-        }
-        .content {
-            padding: 30px;
         }
         h1 { 
             color: #4a3b32; 
-            text-align: center; 
-            margin-top: 10px;
-            margin-bottom: 25px;
-            font-size: 28px;
-            font-weight: 700;
+            text-align: left; 
+            margin-bottom: 30px; 
+            font-size: 20px;
+            border-bottom: 2px solid #6f4e37;
+            padding-bottom: 10px;
+            letter-spacing: 1px;
         }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
-        .form-group { display: flex; flex-direction: column; }
-        label { margin-bottom: 6px; font-weight: 600; color: #5a4a42; font-size: 14px; }
+        
+        .seccion-formulario {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+        
+        .form-group { 
+            display: flex; 
+            flex-direction: column; 
+            background-color: #fdfbf9;
+            padding: 15px;
+            border-radius: 12px;
+            border: 1px solid #eae5e1;
+            transition: all 0.3s ease;
+        }
+        .form-group:focus-within {
+            border-color: #6f4e37;
+            background-color: #ffffff;
+            box-shadow: 0 4px 12px rgba(111, 78, 55, 0.1);
+        }
+        
+        label { 
+            margin-bottom: 8px; 
+            font-weight: bold; 
+            color: #6f4e37; 
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
         input {
-            padding: 11px;
-            border: 2px solid #dcd1c4;
-            border-radius: 8px;
-            font-size: 14px;
+            padding: 8px 4px;
+            border: none;
+            border-bottom: 2px solid #ccc;
+            border-radius: 0;
+            font-size: 16px;
+            background-color: transparent;
+            color: #333;
+            font-weight: 600;
             transition: border-color 0.3s;
-            background-color: #fdfbf7;
         }
         input:focus {
             outline: none;
-            border-color: #8c6239;
+            border-bottom-color: #6f4e37;
+        }
+        
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+
+        /* Estructura del botón extendida */
+        .btn-contenedor {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 10px;
         }
         button {
-            grid-column: span 2;
-            background-color: #5c3a21;
+            background-color: #6f4e37;
             color: white;
-            padding: 14px;
+            padding: 14px 40px;
             border: none;
-            border-radius: 8px;
+            border-radius: 30px;
             font-size: 16px;
             font-weight: bold;
             cursor: pointer;
-            margin-top: 15px;
-            transition: background 0.3s, transform 0.1s;
-            box-shadow: 0 4px 10px rgba(92, 58, 33, 0.3);
+            transition: all 0.3s;
+            box-shadow: 0 4px 10px rgba(111, 78, 55, 0.2);
         }
-        button:hover { background-color: #442a17; }
-        button:active { transform: scale(0.99); }
+        button:hover { 
+            background-color: #553c2a;
+            transform: translateY(-1px);
+        }
+        button:active {
+            transform: translateY(1px);
+        }
         
         .result {
-            margin-top: 30px;
-            border-radius: 12px;
-            overflow: hidden;
+            margin-top: 35px;
+            padding: 25px;
+            border-radius: 16px;
             display: none;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-            background-color: white;
-            border: 1px solid #e0e0e0;
+            box-shadow: inset 0 2px 8px rgba(0,0,0,0.05);
         }
-        .result-img {
-            width: 100%;
-            height: 140px;
-            object-fit: cover;
-        }
-        .result-body {
-            padding: 20px;
-        }
-        .apto { border-left: 6px solid #28a745; }
-        .apto h3 { color: #1e7e34; margin-top: 0; }
-        .no-apto { border-left: 6px solid #dc3545; }
-        .no-apto h3 { color: #bd2130; margin-top: 0; }
-        
-        .certeza-text {
-            font-weight: 600;
-            color: #666;
-            margin-bottom: 15px;
-        }
-        ul { padding-left: 20px; color: #444; }
-        li { margin-bottom: 8px; line-height: 1.4; }
+        .apto { background-color: #bc804c; color: #000000; border: 1px solid #bc804c; }
+        .no-apto { background-color: #f8d7da; color: #000000; border: 1px solid #f5c6cb; }
+        .result h3 { margin-top: 0; font-size: 20px; }
+        ul { padding-left: 20px; margin-top: 10px; }
+        li { margin-bottom: 8px; line-height: 1.5; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <img src="https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?q=80&w=800&auto=format&fit=crop" class="banner-header" alt="Cafetal">
-    
-    <div class="content">
-        <h1>☕ Evaluador Inteligente de Suelos</h1>
-        <form id="sueloForm" class="grid">
-            <div class="form-group">
-                <label>Nitrógeno (N):</label>
-                <input type="number" id="N" value="107" required step="any">
-            </div>
-            <div class="form-group">
-                <label>Fósforo (P):</label>
-                <input type="number" id="P" value="34" required step="any">
-            </div>
-            <div class="form-group">
-                <label>Potasio (K):</label>
-                <input type="number" id="K" value="32" required step="any">
-            </div>
-            <div class="form-group">
-                <label>pH del Suelo:</label>
-                <input type="number" id="ph" value="6.78" required step="any">
-            </div>
-            <div class="form-group">
-                <label>Temperatura (°C):</label>
-                <input type="number" id="temperature" value="26.77" required step="any">
-            </div>
-            <div class="form-group">
-                <label>Humedad (%):</label>
-                <input type="number" id="humidity" value="66.41" required step="any">
-            </div>
-            <div class="form-group" style="grid-column: span 2;">
-                <label>Precipitación / Lluvia (mm):</label>
-                <input type="number" id="rainfall" value="177.77" required step="any">
-            </div>
-            <button type="submit">📋 Analizar Muestra de Tierra</button>
-        </form>
+<div class="titulo-superior">EVALUADOR DE TERRENO PARA CULTIVO DE CAFE</div>
 
-        <div id="resultadoBox" class="result">
-            <img id="resultadoImg" src="" class="result-img" alt="Estado del terreno">
-            <div class="result-body">
-                <h3 id="resultadoTitulo"></h3>
-                <p id="resultadoCerteza" class="certeza-text"></p>
-                <h4>💡 Recomendaciones Técnicas:</h4>
-                <div id="recomendacionesTexto"></div>
+<div class="container">
+    <h1>DATOS DEL SUELO</h1>
+    <form id="sueloForm">
+        
+        <div class="seccion-formulario">
+            <div class="form-group">
+                <label>Nitrógeno (N)</label>
+                <input type="number" id="N" required step="any">
+            </div>
+            <div class="form-group">
+                <label>Fósforo (P)</label>
+                <input type="number" id="P" required step="any">
+            </div>
+            <div class="form-group">
+                <label>Potasio (K)</label>
+                <input type="number" id="K" required step="any">
             </div>
         </div>
+
+        <div class="seccion-formulario">
+            <div class="form-group">
+                <label>pH del Suelo</label>
+                <input type="number" id="ph" required step="any">
+            </div>
+            <div class="form-group">
+                <label>Temperatura (°C)</label>
+                <input type="number" id="temperature" required step="any">
+            </div>
+        </div>
+
+        <div class="seccion-formulario">
+            <div class="form-group">
+                <label>Humedad (%)</label>
+                <input type="number" id="humidity" required step="any">
+            </div>
+            <div class="form-group">
+                <label>Precipitación / Lluvia (mm)</label>
+                <input type="number" id="rainfall" required step="any">
+            </div>
+        </div>
+
+        <div class="btn-contenedor">
+            <button type="submit">Evaluar Terreno</button>
+        </div>
+    </form>
+
+    <div id="resultadoBox" class="result">
+        <h3 id="resultadoTitulo"></h3>
+        <p id="resultadoCerteza"></p>
+        <h4>Recomendaciones sobre el terreno:</h4>
+        <div id="recomendacionesTexto"></div>
     </div>
 </div>
 
@@ -189,31 +229,16 @@ document.getElementById('sueloForm').addEventListener('submit', async (e) => {
     const res = await response.json();
     
     const resBox = document.getElementById('resultadoBox');
-    const resImg = document.getElementById('resultadoImg');
-    
     resBox.style.display = 'block';
-    
-    // Configuración visual dinámica según la predicción del modelo
-    if (res.clase === 1) {
-        resBox.className = 'result apto';
-        // Imagen de planta de café saludable creciendo
-        resImg.src = "https://images.unsplash.com/photo-1509042239860-f550ce710b93?q=80&w=600&auto=format&fit=crop";
-    } else {
-        resBox.className = 'result no-apto';
-        // Imagen de tierra seca/inadecuada
-        resImg.src = "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?q=80&w=600&auto=format&fit=crop";
-    }
+    resBox.className = 'result ' + (res.clase === 1 ? 'apto' : 'no-apto');
     
     document.getElementById('resultadoTitulo').innerText = res.diagnostico;
-    document.getElementById('resultadoCerteza').innerText = `Fiabilidad del diagnóstico: ${res.certeza}%`;
+    document.getElementById('resultadoCerteza').innerText = `Certeza del modelo: ${res.certeza}%`;
     
     let recsHtml = '<ul>';
     res.recomendaciones.forEach(r => recsHtml += `<li>${r}</li>`);
     recsHtml += '</ul>';
     document.getElementById('recomendacionesTexto').innerHTML = recsHtml;
-    
-    // Desplazar la pantalla suavemente hacia el resultado
-    resBox.scrollIntoView({ behavior: 'smooth' });
 });
 </script>
 
@@ -241,18 +266,17 @@ def predict():
     certeza = float(probabilidades[prediccion] * 100)
     
     if prediccion == 1:
-        diagnostico = "🎉 ¡SUELO OPTIMIZADO Y APTO PARA CAFÉ!"
+        diagnostico = "SUELO APTO PARA SU CULTIVO"
         recs = [
-            "**Preservar el balance:** Las condiciones actuales son excelentes. Evita añadir fertilizantes nitrogenados innecesarios para no quemar la raíz.",
-            "**Conservación de humedad:** El nivel hídrico reportado es ideal. Se aconseja implementar coberturas orgánicas (acolchado) para protegerlo de la evaporación solar directa.",
-            "**Control preventivo:** El pH se ubica en el punto dulce para la absorción de nutrientes del café. Realiza calicatas de control cada ciclo productivo."
+            "Mantener condiciones del suelo: las condiciones son óptimas evitar sobrecargar alguna cosa.",
+            "Monitoreo de humedad: mantener humedad del terreno.",
+            "Control de acidez: pH óptimo, mantener revisión del mismo"
         ]
     else:
-        diagnostico = "❌ CONDICIONES NO APTAS PARA EL CULTIVO"
+        diagnostico = "SUELO NO APTO PARA CULTIVO"
         recs = [
-            "**Plan de Enmiendas Químicas:** Tus macronutrientes esenciales (N-P-K) no se alinean con las demandas del cultivo de café. Diseña un plan de fertilización correctiva basada en estos desbalances.",
-            "**Monitoreo del Microclima:** Los factores de temperatura o lluvia están limitando el éxito del cultivo. Considera la implementación de sistemas de riego controlado o el uso de árboles de sombra (como el género Inga) para regular la temperatura.",
-            "**Alternativa Agronómica:** Las características de este suelo sugieren una afinidad natural hacia otro tipo de bioma. Si las correcciones son muy costosas, evalúa la rotación de cultivos compatibles."
+            "Nutrientes: Problablemnete los niveles de N,P,K sean bajas.",
+            "Clima: El clima puede no ser favirable par la cosecha.",
         ]
         
     return jsonify({
@@ -263,3 +287,6 @@ def predict():
     })
 
 if __name__ == '__main__':
+    import os
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)
